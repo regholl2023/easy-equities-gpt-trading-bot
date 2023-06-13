@@ -21,7 +21,7 @@ class AlpacaTrading:
         self.account = self.api.get_account()
 
 
-    def buy(self, symbol: str, notional: float, limit_price: float=None, stop_price: float=None) -> dict:
+    def buy(self, symbol: str, notional: float, limit_price: float=None, take_profit: float=None, stop_price: float=None) -> dict:
         """
         Place a buy order for the specified symbol.
 
@@ -41,13 +41,10 @@ class AlpacaTrading:
             type=OrderType.LIMIT if limit_price is not None else OrderType.MARKET,
             time_in_force=TimeInForce.DAY,
             limit_price=limit_price,
-            stop_price=stop_price
+            stop_price=stop_price,
+            take_profit=TakeProfitRequest(limit_price=take_profit)
         )
         market_order = self.api.submit_order(market_order_data)
-
-        # update account before sending
-        self.account = self.api.get_account()
-
         return market_order
 
 
@@ -71,6 +68,10 @@ class AlpacaTrading:
             position does not exist: will be thrown on non existant positions
         """
 
+        # sell the whole posistion as if neither qty or percentage is set
+        if percentage is None and qty is None:
+            percentage = 1
+
         # get/check if there even is an open position
         position = self.api.get_open_position(symbol)
 
@@ -86,12 +87,17 @@ class AlpacaTrading:
             time_in_force=TimeInForce.DAY,
         )
         market_order = self.api.submit_order(market_order_data)
-
-        # update account before sending
-        self.account = self.api.get_account()
-
         return market_order
 
+    def get_positions(self) -> list:
+        """
+        Get the current open positions.
+
+        Returns:
+            list: A list of position objects representing the current open positions.
+        """
+        positions = self.api.get_all_positions()
+        return positions
 
     def get_available_cash(self) -> float:
         """
