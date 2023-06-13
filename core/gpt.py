@@ -31,26 +31,38 @@ class GPTBot:
 
         Args:
             api_key: your open AI api key
+            stock_info (dict): stock information to be feed into gpt
+                {
+                    "news": (str) in json format,
+                    "price_history": (list) price history in 15 min interval,
+                    "open_position": (bool) is there an existing open position,
+                    "capital": (float) how much money is available to spend on stocks,
+                    ** if there is an open position**
+                    "opening_price": (float) opening price of the position,
+                    "current_price": (float) current price of the position,
+                }
         
         Return:
             dict: should return a desision in this format
             {
                 "buy": ammount_to_buy_usd or null,
                 "sell": true or null,
+                "stop_price": stop loss price,
+                "take_profit": take profit price,
                 "message": "optional feed back"
             }
         """
         news = stock_info['news']
         price_history = stock_info['price_history']
         open_position = stock_info['open_position']
-        opening_amount = stock_info.get('opening_amount')
-        current_amount = stock_info.get('current_amount')
+        opening_price = stock_info.get('opening_price')
+        current_price = stock_info.get('current_price')
         capital = stock_info['capital']
 
         # Generate a prompt for GPT-3.5 based on the given information
-        prompt = f"News: {news}\n\nPrice History(old to new): {price_history}\n\nOpen Position: {open_position}\n"
+        prompt = f"News: {news}\n\nPrice History(old to new, 15 min interval): {price_history}\n\nOpen Position: {open_position}\n"
         if open_position:
-            prompt += f"Purchase Value(usd): {opening_amount}\nCurrent Value(usd): {current_amount}\n"
+            prompt += f"Opening Price: {opening_price}\nCurrent Price: {current_price}\n"
         prompt += f"\nCapital: {capital}\n\n"
         prompt += "note: fractional shares is allowed, you dont need to buy a full share\n"
         prompt += "note: you cannot exceed the capital amount, rather buy smaller ammount (fractional), also keep in mind good risk managmant\n"
@@ -60,6 +72,8 @@ class GPTBot:
 {
     "buy": ammount_to_buy_usd or null,
     "sell": true or null,
+    "stop_price": stop_loss_price,
+    "take_profit": take_profit_price,
     "message": "optional feed back"
 }
 
@@ -90,7 +104,7 @@ note: only return valid JSON
         print(response.choices[0].text)
 
         # Parse the response and extract the trading decision
-        decision = self.parse_trading_decision(response.choices[0].text)
+        decision = self._parse_trading_decision(response.choices[0].text)
 
         print(f"decision: {decision}")
 
@@ -98,7 +112,7 @@ note: only return valid JSON
 
 
 
-    def parse_trading_decision(self, decision_text):
+    def _parse_trading_decision(self, decision_text):
         """Parse the trading decision from the given text.
 
         Args:
@@ -129,15 +143,3 @@ note: only return valid JSON
         except:
             # perfaps the json is malfromed
             raise Exception(decision_text)
-
-    def extract_amount(self, text):
-        """Extract the amount from the given text.
-
-        Args:
-            text (str): The text containing the amount.
-
-        Returns:
-            int: The extracted amount.
-
-        """
-        return int(text.split(":")[1].strip().replace(",", ""))
