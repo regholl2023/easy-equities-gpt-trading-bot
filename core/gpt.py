@@ -47,8 +47,7 @@ class GPTBot:
             {
                 "buy": ammount_to_buy_usd or null,
                 "sell": true or null,
-                "stop_price": stop loss price,
-                "take_profit": take profit price,
+                "trail_percent": percentage for trailing stop loss,
                 "message": "optional feed back"
             }
         """
@@ -68,12 +67,12 @@ class GPTBot:
         prompt += "note: you cannot exceed the capital amount, rather buy smaller ammount (fractional), also keep in mind good risk managmant\n"
         prompt += "note: do not spend all money on one stock!\n"
         prompt += "note: you may only spend a maximum amount of 10% of the capital amount\n"
+        prompt += "note: trail_percent default is generally 6.0 (which is 6%), you can choose whatever value is appropriate\n"
         prompt += """based on the given information Please suggest the best trading decision in this JSON format:\n
 {
     "buy": ammount_to_buy_usd or null,
     "sell": true or null,
-    "stop_price": stop_loss_price,
-    "take_profit": take_profit_price,
+    "trail_percent": percentage_for_trailing_stop_loss,
     "message": "optional feed back"
 }
 

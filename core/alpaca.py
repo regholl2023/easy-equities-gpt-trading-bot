@@ -1,5 +1,5 @@
 from alpaca.trading.client import TradingClient
-from alpaca.trading.requests import MarketOrderRequest, TakeProfitRequest, StopLossRequest
+from alpaca.trading.requests import MarketOrderRequest, TrailingStopOrderRequest, TakeProfitRequest, StopLossRequest, GetOrdersRequest
 from alpaca.trading.enums import OrderSide, TimeInForce, OrderType
 from env import ALPACA_API_KEY, ALPACA_SECRET_KEY
 
@@ -20,8 +20,28 @@ class AlpacaTrading:
         self.api = TradingClient(api_key, api_secret, paper)
         self.account = self.api.get_account()
 
+    def get_order(self, symbol: str) -> dict:
+        """ Returns the order for the given symbol
 
-    def buy(self, symbol: str, notional: float, limit_price: float=None, take_profit: float=None, stop_price: float=None) -> dict:
+            Args:
+                symbol: The symbol to get the order for
+            
+            Returns:
+                dict: the order object
+            
+            Raises:
+                Exception: "order not found" if the order is not found
+        """
+
+        order_request = GetOrdersRequest(symbols=[symbol])
+        orders = self.api.get_orders(order_request)
+
+        if len(orders) == 0:
+            raise Exception("order not found")
+        else:
+            return orders[0]
+
+    def buy(self, symbol: str, notional: float, limit_price: float=None, trail_percent: float=6) -> dict:
         """
         Place a buy order for the specified symbol.
 
@@ -33,16 +53,33 @@ class AlpacaTrading:
 
         Returns:
             dict: The buy order response from the Alpaca API.
+        
+        Raises:
+            fractional shares error: may throw error if frational shares is not enabled
+                (only if percentage is set)
+            Exception: "existing pending order" if there is an existing order
         """
-        market_order_data = MarketOrderRequest(
+
+        try:
+            # check if there is an unfulfilled order
+            order = self.get_order(symbol=symbol)
+            if order['symbol'] == symbol and order['status'] not in ['new', 'accepted', 'held', 'partially_filled', 'done_for_day', 'pending_new', 'accepted_for_bidding']:
+                # we have an exitsing order for this symbol so we should wait for
+                # to resolve. orders should only last a day before failing
+                raise Exception("existing pending order")
+            
+        except Exception as error:
+            print(error)
+            # should be safe to buy
+
+        market_order_data = TrailingStopOrderRequest(
             symbol=symbol,
             notional=notional,
             side=OrderSide.BUY,
             type=OrderType.LIMIT if limit_price is not None else OrderType.MARKET,
             time_in_force=TimeInForce.DAY,
             limit_price=limit_price,
-            stop_price=stop_price,
-            take_profit=TakeProfitRequest(limit_price=take_profit)
+            trail_percent=trail_percent,
         )
         market_order = self.api.submit_order(market_order_data)
         return market_order
@@ -62,7 +99,7 @@ class AlpacaTrading:
         Returns:
             dict: The sell order response from the Alpaca API.
 
-        Throws:
+        Raises:
             fractional shares error: may throw error if frational shares is not enabled
                 (only if percentage is set)
             position does not exist: will be thrown on non existant positions
@@ -74,6 +111,18 @@ class AlpacaTrading:
 
         # get/check if there even is an open position
         position = self.api.get_open_position(symbol)
+
+        try:
+            # check if there is an unfulfilled order
+            order = self.get_order(symbol=symbol)
+            if order['symbol'] == symbol and order['status'] not in ['new', 'accepted', 'held', 'partially_filled', 'done_for_day', 'pending_new', 'accepted_for_bidding']:
+                # we have an exitsing order for this symbol so we should wait for
+                # to resolve. orders should only last a day before failing
+                raise Exception("existing pending order")
+            
+        except Exception as error:
+            print(error)
+            # should be safe to sell
 
         # adjust the qty if percentage is set
         if percentage is not None:

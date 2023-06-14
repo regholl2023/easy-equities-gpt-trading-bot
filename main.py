@@ -118,13 +118,25 @@ class TradingBot():
 
             # buy the stock if gpt says so
             print(f"buying {symbol}")
-            self.alpaca.buy(symbol=symbol, notional=decision['buy'], take_profit=decision['take_profit'], stop_price=decision['stop_price'])
+
+            try:
+                self.alpaca.buy(symbol=symbol, notional=decision['buy'], trail_percent=decision['trail_percent'])
+            except Exception as error:
+                # must be an existing order
+                print(error)
+
             self.update_positions = True
 
         # sell the stock if we have an open position and if gpt says so
         elif stock_info['open_position'] and decision['sell']:
             print(f"selling {symbol}")
-            self.alpaca.sell(symbol=symbol, percentage=decision['percentage'])
+
+            try:
+                self.alpaca.sell(symbol=symbol, percentage=decision['percentage'])
+            except Exception as error:
+                # must be an existing order
+                print(error)
+
             self.update_positions = True
 
         print(f"message from gpt:\n{decision['message']}\n")
