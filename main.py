@@ -7,7 +7,9 @@ from datetime import datetime
 from core.easy_equities import EasyEquities
 from core.alpaca import AlpacaTrading
 from core.gpt import GPTBot
-from core.news import get_news
+from core.news import News
+import sched
+from time import time, sleep
 
 # import env vaiables from env.py
 # before using this program you need to
@@ -15,115 +17,137 @@ from core.news import get_news
 # ALPACA_API_KEY = 'banana360kickflip'
 # ALPACA_SECRET_KEY = 'banana360kickflip'
 # OPEN_AI_API_KEY = 'banana360kickflip'
-# todo: make marketaux a class instead
-# MARKETAUX_API_KEY = 'your_marketaux_api_key'
 from env import ALPACA_API_KEY, ALPACA_SECRET_KEY, OPEN_AI_API_KEY
 
+class TradingBot():
+    """ Wrapper for trading to make life easyer when accesing global variables
 
-# Get Day Number from weekday
-weekno = datetime.today().weekday()
+        usage example:
+            trading_bot = TradingBot()
+            trading_bot.news.run()
+        
+        idealy this should be run with systemctl and auto restart if it fails
+    """
 
-# dont run if it is a weekend
-if weekno < 5:
-    print("Today is a Weekday")
-else:
-    # 5 Sat, 6 Sun
-    print("Today is a Weekend")
-    exit(0)
+    def __init__(self):
+        # init AlpacaTrading
+        self.alpaca = AlpacaTrading(api_key=ALPACA_API_KEY,
+                                    api_secret=ALPACA_SECRET_KEY,
+                                    paper=True)
+        
+        # get the ammount of money we can spend / have avalable in the account
+        self.balance = self.alpaca.get_available_cash()
+        self.original_balance = self.balance
+
+        # get all the current open positions
+        self.open_positions = self.alpaca.get_positions()
+        # updating open positions can take time
+        # so we only update the open positions when neccisary
+        self.update_positions = False
+
+        # some stocks that I want to focus on, later on when I sign up for the
+        # news api I can add many more stocks
+        # ideally we would load a bunch of stocks in here but it
+        # costs quite a bit for the news api subscription.
+        self.target_symbols = ['AAPL', 'MSFT', 'GOOGL', 'NVDA', 'TSM', 'META', 'AVGO', 'AMD']
+
+        # add in the existing positions incase we need to close them
+        for position in self.open_positions:
+            self.target_symbols.append(position["symbol"])
+        
+        # initalise the GPT decision maker
+        self.gpt_Bot = GPTBot(OPEN_AI_API_KEY)
+
+        # inintalise news and pass on_news
+        self.news = News(api_key=ALPACA_API_KEY, api_secret=ALPACA_SECRET_KEY, on_news=self.on_news)
 
 
-# init AlpacaTrading
-alpaca = AlpacaTrading(api_key=ALPACA_API_KEY, api_secret=ALPACA_SECRET_KEY, paper=True)
+    def process_stock(self, symbol: str, news: dict=None):
 
-# get all the current open positions
-open_positions = alpaca.get_positions()
-# updating open positions can take time
-# so we only update the open positions when neccisary
-update_positions = False
+        """ does processes the stock, this should be called every time news
+            drops for a particular stock
 
-# get the ammount of money we can spend / have avalable in the account
-balance = alpaca.get_available_cash()
-original_balance = balance
+            Args:
+                symbol: (str) the stock symbol to process.
+                news: (dict) the news for the stock, doesnt require any
+                    particular structure
+        """
 
-# some stocks that I want to focus on, later on when I sign up for the
-# news api I can add many more stocks
-# ideally we would load a bunch of stocks in here but it
-# costs quite a bit for the news api subscription.
-target_symbols = ['AAPL', 'MSFT', 'GOOGL', 'NVDA', 'TSM', 'META', 'AVGO', 'AMD']
+        print(f"processing {symbol}")
 
-# add in the existing positions incase we need to close them
-for position in open_positions:
-    target_symbols.append(position["symbol"])
+        # get the stock info from yahoo finance
+        ticker = yf.Ticker(symbol)
+        # then get a dataframe
+        dataframe = ticker.history(period='5d', interval='15m')[map(str.title, ['open', 'close', 'low', 'high', 'volume'])]
 
-# get the news for all the symbols
-news_items = get_news(target_symbols)
+        
 
-# initalise the GPT decision maker
-gpt_Bot = GPTBot(OPEN_AI_API_KEY)
+        # get the position if there is one
+        position = False
+        for _position in self.open_positions:
+            if _position['symbol'] == symbol:
+                position = _position
+                break
 
-# loop through each news item
-for news_item in news_items:
+        
+        # compile the stock info to feed into gpt
+        stock_info = {
+            "news": json.dumps(news) if news is not None else None,
+            "price_history": dataframe.Close.values,
+            "open_position": position is not False,
+            "capital": self.balance,
+        }
 
-    symbol = news_item['stock']
-    print(f"processing {symbol}")
+        # add in the position info if there is an open position
+        if position is not False:
+            stock_info['opening_price'] = position['avg_entry_price']
+            stock_info['current_price'] = position['current_price']
 
-    # get the stock info from yahoo finance
-    ticker = yf.Ticker(symbol)
-    # then get a dataframe
-    df = ticker.history(period='5d', interval='15m')[map(str.title, ['open', 'close', 'low', 'high', 'volume'])]
+        # get gpt to make a decision for us
+        decision = self.gpt_Bot.make_trading_decision(stock_info)
 
-    
+        # execute decision
+        if position is not False and decision['buy']:
 
-    # get the position if there is one
-    position = False
-    for _position in open_positions:
-        if _position['symbol'] == symbol:
-            position = _position
-            break
+            if self.balance < 20:
+                print('Not enough money, skipping purchase')
 
-    
-    # compile the stock info to feed into gpt
-    stock_info = {
-        "news": json.dumps(news_item),
-        "price_history": df.Close.values,
-        "open_position": position is not False,
-        "capital": balance,
-    }
+            if decision['buy'] >= self.balance:
+                print('gpt tried to spend more money than we said it should.')
+                decision['buy'] = self.original_balance * 0.1
 
-    # add in the position info if there is an open position
-    if position is not False:
-        stock_info['opening_price'] = position['avg_entry_price']
-        stock_info['current_price'] = position['current_price']
+            # buy the stock if gpt says so
+            print(f"buying {symbol}")
+            self.alpaca.buy(symbol=symbol, notional=decision['buy'], take_profit=decision['take_profit'], stop_price=decision['stop_price'])
+            self.update_positions = True
 
-    # get gpt to make a decision for us
-    decision = gpt_Bot.make_trading_decision(stock_info)
+        # sell the stock if we have an open position and if gpt says so
+        elif stock_info['open_position'] and decision['sell']:
+            print(f"selling {symbol}")
+            self.alpaca.sell(symbol=symbol, percentage=decision['percentage'])
+            self.update_positions = True
 
-    # execute decision
-    if position is not False and decision['buy']:
+        print(f"message from gpt:\n{decision['message']}\n")
 
-        if balance < 20:
-            print('Not enough money, skipping purchase')
-            continue
+        # update open positions if necessary
+        if self.update_positions:
+            self.balance = self.alpaca.get_available_cash()
+            self.open_positions = self.alpaca.get_positions()
+            self.update_positions = False
 
-        if decision['buy'] >= balance:
-            print('gpt tried to spend more money than we said it should.')
-            decision['buy'] = original_balance * 0.1
 
-        # buy the stock if gpt says so
-        print(f"buying {symbol}")
-        alpaca.buy(symbol=symbol, notional=decision['buy'], take_profit=decision['take_profit'], stop_price=decision['stop_price'])
-        update_positions = True
+    def on_news(self, news):
+        """ function to run when ever news drops on a particular stock
 
-    # sell the stock if we have an open position and if gpt says so
-    elif stock_info['open_position'] and decision['sell']:
-        print(f"selling {symbol}")
-        alpaca.sell(symbol=symbol, percentage=decision['percentage'])
-        update_positions = True
+        Args:
+            news: (dict) a dictionary with details from the news item.
+                no particular structure is neccisary
+        """
+        for symbol in news["symbols"]:
+            # only run for our trageted symbols
+            if symbol in self.target_symbols:
+                self.process_stock(symbol, news)
 
-    print(f"message from gpt:\n{decision['message']}\n")
 
-    # update open positions if necessary
-    if update_positions:
-        balance = alpaca.get_available_cash()
-        open_positions = alpaca.get_positions()
-        update_positions = False
+trading_bot = TradingBot()
+trading_bot.news.run()
