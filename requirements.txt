@@ -3,3 +3,4 @@ webdriver_manager
 openai
 yfinance
 alpaca-py
+websocket-client

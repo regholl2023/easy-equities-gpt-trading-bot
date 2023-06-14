@@ -15,9 +15,9 @@ class GPTBot:
             'news': "{'title': 'Company X announces positive earnings report'}",
             'price_history': "[100, 110, 105, 95, 100, 115, 120]",
             'open_position': True,
-            'opening_date': '2023-05-19',
+            'capital': 50000,
             'opening_price': 105.5,
-            'capital': 50000
+            'current_price': 102.5,
         }
         decision = bot.make_trading_decision(stock_info)
         print(decision)
