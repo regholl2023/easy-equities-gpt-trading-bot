@@ -41,7 +41,7 @@ class AlpacaTrading:
         else:
             return orders[0]
 
-    def buy(self, symbol: str, notional: float, limit_price: float=None, trail_percent: float=6) -> dict:
+    def buy(self, symbol: str, qty: int, limit_price: float=None, trail_percent: float=6) -> dict:
         """
         Place a buy order for the specified symbol.
 
@@ -74,7 +74,7 @@ class AlpacaTrading:
 
         market_order_data = TrailingStopOrderRequest(
             symbol=symbol,
-            notional=notional,
+            qty=qty,
             side=OrderSide.BUY,
             type=OrderType.LIMIT if limit_price is not None else OrderType.MARKET,
             time_in_force=TimeInForce.DAY,

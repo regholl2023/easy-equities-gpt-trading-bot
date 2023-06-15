@@ -121,7 +121,7 @@ class TradingBot():
             print(f"buying {symbol}")
 
             try:
-                self.alpaca.buy(symbol=symbol, notional=decision['buy'], trail_percent=decision['trail_percent'])
+                self.alpaca.buy(symbol=symbol, qty=int(decision['buy']), trail_percent=decision['trail_percent'])
             except Exception as error:
                 # must be an existing order
                 print(error)
