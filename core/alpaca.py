@@ -17,7 +17,7 @@ class AlpacaTrading:
             api_secret (str): The Alpaca API secret key.
             base_url (str, optional): The Alpaca API base URL. Defaults to 'https://paper-api.alpaca.markets'.
         """
-        self.api = TradingClient(api_key, api_secret, paper)
+        self.api = TradingClient(api_key=api_key, secret_key=api_secret, paper=paper)
         self.account = self.api.get_account()
 
     def get_order(self, symbol: str) -> dict:

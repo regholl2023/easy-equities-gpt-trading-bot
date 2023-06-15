@@ -45,7 +45,7 @@ class GPTBot:
         Return:
             dict: should return a desision in this format
             {
-                "buy": ammount_to_buy_usd or null,
+                "buy": quantity (int) or null,
                 "sell": true or null,
                 "trail_percent": percentage for trailing stop loss,
                 "message": "optional feed back"
@@ -63,14 +63,17 @@ class GPTBot:
         if open_position:
             prompt += f"Opening Price: {opening_price}\nCurrent Price: {current_price}\n"
         prompt += f"\nCapital: {capital}\n\n"
-        prompt += "note: fractional shares is allowed, you dont need to buy a full share\n"
-        prompt += "note: you cannot exceed the capital amount, rather buy smaller ammount (fractional), also keep in mind good risk managmant\n"
+        # looks like you can only do full shares when doing trailing stop
+        # prompt += "note: fractional shares is allowed, you dont need to buy a full share\n"
+        # if fractional is not allowed for trailing stop orders then this line is useless as well
+        # prompt += "note: you cannot exceed the capital amount, rather buy smaller ammount (fractional), also keep in mind good risk managmant\n"
         prompt += "note: do not spend all money on one stock!\n"
-        prompt += "note: you may only spend a maximum amount of 10% of the capital amount\n"
+        # this line can easly be checked for on client side
+        # prompt += "note: you may only spend a maximum amount of 10% of the capital amount\n"
         prompt += "note: trail_percent default is generally 6.0 (which is 6%), you can choose whatever value is appropriate\n"
         prompt += """based on the given information Please suggest the best trading decision in this JSON format:\n
 {
-    "buy": ammount_to_buy_usd or null,
+    "buy": quantity (int) or null,
     "sell": true or null,
     "trail_percent": percentage_for_trailing_stop_loss,
     "message": "optional feed back"
