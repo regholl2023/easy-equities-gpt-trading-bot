@@ -132,7 +132,7 @@ note: only return valid JSON
             while arr[0] != '{':
                 arr.pop(0)
 
-            while arr[-1] != ' ':
+            while arr[-1] == ' ':
                 arr.pop(-1)
             
             if  arr[-1] != '}':

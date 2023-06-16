@@ -6,19 +6,27 @@ import json
 
 class News():
 
-    def __init__(self, api_key, api_secret, on_news):
+    def __init__(self, api_key, api_secret, target_symbols, on_news):
         self.api_key = api_key
         self.api_secret = api_secret
+        self.target_symbols = target_symbols
         self.on_news = on_news
 
     def on_message(self, ws, message):
-        # print(message)
+
+        # collect some messages for testing
+        file1 = open("text.txt", "a")
+        file1.write(f"{message}\n")
+        file1.close()
+
         try:
             msgs = json.loads(message)
             for msg in msgs:
-                if msg['msg'] == 'authenticated' and msg['T'] == 'success':
-                    ws.send(json.dumps({"action":"subscribe","news":['AAPL', 'MSFT', 'GOOGL', 'NVDA', 'TSM', 'META', 'AVGO', 'AMD']}))
-                elif msg['T'] == 'n':
+                print(msg)
+
+                # if this if statment isnt the first to run it will not run
+                # probbly the dumbest thing ive encountered in python
+                if msg['T'].strip() == 'n':
                     # got news, call the function
                     self.on_news({
                         "headline": msg["headline"],
@@ -27,8 +35,10 @@ class News():
                         "updated_at": msg["updated_at"],
                         "symbols": msg["symbols"],
                     })
-                else:
-                    print(msg)
+
+                if msg['msg'] == 'authenticated' and msg['T'] == 'success':
+                    ws.send(json.dumps({"action":"subscribe","news": self.target_symbols}))
+                
         except Exception as error:
             print(error)
 
@@ -43,7 +53,7 @@ class News():
         ws.send(json.dumps({"action": "auth","key": self.api_key,"secret": self.api_secret}))
 
     def run(self):
-        websocket.enableTrace(True)
+        websocket.enableTrace(False)
         ws = websocket.WebSocketApp("wss://stream.data.alpaca.markets/v1beta1/news",
                                 on_open=self.on_open,
                                 on_message=self.on_message,
