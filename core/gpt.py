@@ -26,7 +26,7 @@ class GPTBot:
     def __init__(self, api_key):
         openai.api_key = api_key
 
-    def make_trading_decision(self, stock_info):
+    def make_trading_decision(self, stock_info, symbol):
         """Generate a trading decision based on the given stock information.
 
         Args:
@@ -59,7 +59,7 @@ class GPTBot:
         capital = stock_info['capital']
 
         # Generate a prompt for GPT-3.5 based on the given information
-        prompt = f"News: {news}\n\nPrice History(old to new, 15 min interval): {price_history}\n\nOpen Position: {open_position}\n"
+        prompt = f"News for symbol {symbol}: {news}\n\nPrice History(old to new, 15 min interval): {price_history}\n\nDo we own this stock currently: {open_position}\n"
         if open_position:
             prompt += f"Opening Price: {opening_price}\nCurrent Price: {current_price}\n"
         prompt += f"\nCapital: {capital}\n\n"

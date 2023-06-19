@@ -10,6 +10,7 @@ from core.gpt import GPTBot
 from core.news import News
 import sched
 from time import time, sleep
+import math
 
 # import env vaiables from env.py
 # before using this program you need to
@@ -105,7 +106,7 @@ class TradingBot():
             stock_info['current_price'] = position['current_price']
 
         # get gpt to make a decision for us
-        decision = self.gpt_Bot.make_trading_decision(stock_info)
+        decision = self.gpt_Bot.make_trading_decision(stock_info=stock_info, symbol=symbol)
 
         # execute decision
         if position is False and decision['buy']:
@@ -113,9 +114,10 @@ class TradingBot():
             if self.balance < 20:
                 print('Not enough money, skipping purchase')
 
-            if decision['buy'] >= self.balance:
-                print('gpt tried to spend more money than we said it should.')
-                decision['buy'] = self.original_balance * 0.1
+            # this isnt valid anymore, a better sollution needs to be made
+            # if decision['buy'] >= self.balance:
+            #     print('gpt tried to spend more money than we said it should.')
+            #     decision['buy'] = self.original_balance * 0.1
 
             # buy the stock if gpt says so
             print(f"buying {symbol}")
