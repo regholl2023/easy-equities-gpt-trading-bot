@@ -102,8 +102,8 @@ class TradingBot():
 
         # add in the position info if there is an open position
         if position is not False:
-            stock_info['opening_price'] = position['avg_entry_price']
-            stock_info['current_price'] = position['current_price']
+            stock_info['opening_price'] = position.avg_entry_price
+            stock_info['current_price'] = position.current_price
 
         # get gpt to make a decision for us
         decision = self.gpt_Bot.make_trading_decision(stock_info=stock_info, symbol=symbol)
