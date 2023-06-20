@@ -126,6 +126,7 @@ class TradingBot():
                 self.alpaca.buy(symbol=symbol, qty=int(decision['buy']), trail_percent=decision['trail_percent'])
             except Exception as error:
                 # must be an existing order
+                print(f"problem buying {symbol}")
                 print(error)
 
             self.update_positions = True
@@ -138,6 +139,7 @@ class TradingBot():
                 self.alpaca.sell(symbol=symbol, percentage=decision['percentage'])
             except Exception as error:
                 # must be an existing order
+                print(f"problem selling {symbol}")
                 print(error)
 
             self.update_positions = True

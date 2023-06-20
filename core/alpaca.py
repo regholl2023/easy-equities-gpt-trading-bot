@@ -60,17 +60,22 @@ class AlpacaTrading:
             Exception: "existing pending order" if there is an existing order
         """
 
+        existing_order = False
         try:
             # check if there is an unfulfilled order
             order = self.get_order(symbol=symbol)
-            if order['symbol'] == symbol and order['status'] not in ['new', 'accepted', 'held', 'partially_filled', 'done_for_day', 'pending_new', 'accepted_for_bidding']:
+            if order.symbol == symbol and order.status in ['new', 'accepted', 'held', 'partially_filled', 'done_for_day', 'pending_new', 'accepted_for_bidding']:
                 # we have an exitsing order for this symbol so we should wait for
                 # to resolve. orders should only last a day before failing
-                raise Exception("existing pending order")
+                # (dont raise exception here because it will do nothing)
+                existing_order = True
             
         except Exception as error:
             print(error)
             # should be safe to buy
+
+        if existing_order:
+            raise Exception("existing pending order")
 
         market_order_data = TrailingStopOrderRequest(
             symbol=symbol,
@@ -112,17 +117,22 @@ class AlpacaTrading:
         # get/check if there even is an open position
         position = self.api.get_open_position(symbol)
 
+        existing_order = False
         try:
             # check if there is an unfulfilled order
             order = self.get_order(symbol=symbol)
-            if order['symbol'] == symbol and order['status'] not in ['new', 'accepted', 'held', 'partially_filled', 'done_for_day', 'pending_new', 'accepted_for_bidding']:
+            if order.symbol == symbol and order.status in ['new', 'accepted', 'held', 'partially_filled', 'done_for_day', 'pending_new', 'accepted_for_bidding']:
                 # we have an exitsing order for this symbol so we should wait for
                 # to resolve. orders should only last a day before failing
-                raise Exception("existing pending order")
+                # (dont raise exception here because it will do nothing)
+                existing_order = True
             
         except Exception as error:
             print(error)
             # should be safe to sell
+
+        if existing_order:
+            raise Exception("existing pending order")
 
         # adjust the qty if percentage is set
         if percentage is not None:
