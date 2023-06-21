@@ -1,3 +1,4 @@
+import math
 from alpaca.trading.client import TradingClient
 from alpaca.trading.requests import MarketOrderRequest, TrailingStopOrderRequest, TakeProfitRequest, StopLossRequest, GetOrdersRequest
 from alpaca.trading.enums import OrderSide, TimeInForce, OrderType
@@ -137,6 +138,12 @@ class AlpacaTrading:
         # adjust the qty if percentage is set
         if percentage is not None:
             qty = position.qty * percentage
+        
+        # convert qty into an int by rounding down
+        qty = int(math.floor(qty))
+
+        if qty <= 0:
+            qty = position.qty
 
         market_order_data = MarketOrderRequest(
             symbol=symbol,

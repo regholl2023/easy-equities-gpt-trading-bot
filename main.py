@@ -136,7 +136,7 @@ class TradingBot():
             print(f"selling {symbol}")
 
             try:
-                self.alpaca.sell(symbol=symbol, percentage=decision['percentage'])
+                self.alpaca.sell(symbol=symbol, percentage=1)
             except Exception as error:
                 # must be an existing order
                 print(f"problem selling {symbol}")
