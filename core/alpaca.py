@@ -82,7 +82,7 @@ class AlpacaTrading:
             qty=qty,
             side=OrderSide.BUY,
             type=OrderType.LIMIT if limit_price is not None else OrderType.MARKET,
-            time_in_force=TimeInForce.DAY,
+            time_in_force=TimeInForce.GTC,
             limit_price=limit_price,
             trail_percent=trail_percent,
         )
