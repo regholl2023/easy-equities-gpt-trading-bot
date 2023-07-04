@@ -170,4 +170,5 @@ class TradingBot():
 
 
 trading_bot = TradingBot()
+# trading_bot.alpaca.buy("GOOGL", qty=100, trail_percent=0.1)
 trading_bot.news.run()

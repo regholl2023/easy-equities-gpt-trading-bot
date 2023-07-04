@@ -61,29 +61,29 @@ class AlpacaTrading:
             Exception: "existing pending order" if there is an existing order
         """
 
-        existing_order = False
-        try:
-            # check if there is an unfulfilled order
-            order = self.get_order(symbol=symbol)
-            if order.symbol == symbol and order.status in ['new', 'accepted', 'held', 'partially_filled', 'done_for_day', 'pending_new', 'accepted_for_bidding']:
-                # we have an exitsing order for this symbol so we should wait for
-                # to resolve. orders should only last a day before failing
-                # (dont raise exception here because it will do nothing)
-                existing_order = True
+        # existing_order = False
+        # try:
+        #     # check if there is an unfulfilled order
+        #     order = self.get_order(symbol=symbol)
+        #     if order.symbol == symbol and order.status in ['new', 'accepted', 'held', 'partially_filled', 'done_for_day', 'pending_new', 'accepted_for_bidding']:
+        #         # we have an exitsing order for this symbol so we should wait for
+        #         # to resolve. orders should only last a day before failing
+        #         # (dont raise exception here because it will do nothing)
+        #         existing_order = True
             
-        except Exception as error:
-            print(error)
-            # should be safe to buy
+        # except Exception as error:
+        #     print(error)
+        #     # should be safe to buy
 
-        if existing_order:
-            raise Exception("existing pending order")
+        # if existing_order:
+        #     raise Exception("existing pending order")
 
         market_order_data = TrailingStopOrderRequest(
             symbol=symbol,
             qty=qty,
             side=OrderSide.BUY,
             type=OrderType.LIMIT if limit_price is not None else OrderType.MARKET,
-            time_in_force=TimeInForce.GTC,
+            time_in_force=TimeInForce.DAY,
             limit_price=limit_price,
             trail_percent=trail_percent,
         )

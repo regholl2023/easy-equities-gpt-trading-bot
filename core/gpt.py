@@ -90,7 +90,7 @@ note: only return valid JSON
         while keep_trying:
             try:
                 response = openai.Completion.create(
-                    engine="text-davinci-003",
+                    engine="text-davinci-002",
                     prompt=prompt,
                     max_tokens=64,
                     n=1,
