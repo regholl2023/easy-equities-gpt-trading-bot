@@ -90,7 +90,7 @@ note: only return valid JSON
         while keep_trying:
             try:
                 response = openai.Completion.create(
-                    engine="gpt-3.5-turbo",
+                    engine="text-curie-001",
                     prompt=prompt,
                     max_tokens=64,
                     n=1,
