@@ -87,26 +87,37 @@ note: only return valid JSON
         # Generate a completion using GPT-3.5
         keep_trying = True
         response = None
-        while keep_trying:
-            try:
-                response = openai.Completion.create(
-                    engine="text-curie-001",
-                    prompt=prompt,
-                    max_tokens=64,
-                    n=1,
-                    stop=None,
-                    temperature=0.7
-                )
-                keep_trying = False
-            except Exception as error:
-                print(error)
-                print('failed to get answer from gpt')
-                keep_trying = True
+        # need a better solution here this is asking to run up a bill
+        # while keep_trying:
+        try:
+            response = openai.ChatCompletion.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {
+                    "role": "system",
+                    "content": "You are a trading robot that only responds in valid json after getting infomation about a stock"
+                    },
+                    {
+                    "role": "user",
+                    "content": prompt
+                    },
+                ],
+                temperature=0.5,
+                max_tokens=64,
+                top_p=1.0,
+                frequency_penalty=0.0,
+                presence_penalty=0.0
+            )
+            keep_trying = False
+        except Exception as error:
+            print(error)
+            print('failed to get answer from gpt')
+            keep_trying = True
 
         print(response.choices[0].text)
 
         # Parse the response and extract the trading decision
-        decision = self._parse_trading_decision(response.choices[0].text)
+        decision = self._parse_trading_decision(response.choices[0].message.content)
 
         print(f"decision: {decision}")
 
