@@ -64,7 +64,7 @@ class TradingBot():
         self.news = News(api_key=ALPACA_API_KEY, api_secret=ALPACA_SECRET_KEY, target_symbols=self.target_symbols, on_news=self.on_news)
 
 
-    def process_stock(self, symbol: str, news: dict=None):
+    def process_stock(self, symbol: str, news: dict=None, decision: dict=None):
 
         """ does processes the stock, this should be called every time news
             drops for a particular stock
@@ -106,7 +106,8 @@ class TradingBot():
             stock_info['current_price'] = position.current_price
 
         # get gpt to make a decision for us
-        decision = self.gpt_Bot.make_trading_decision(stock_info=stock_info, symbol=symbol)
+        if not decision:
+            decision = self.gpt_Bot.make_trading_decision(stock_info=stock_info, symbol=symbol)
 
         # execute decision
         if position is False and decision['buy']:
@@ -170,5 +171,5 @@ class TradingBot():
 
 
 trading_bot = TradingBot()
-# trading_bot.alpaca.buy("GOOGL", qty=100, trail_percent=0.1)
+# trading_bot.process_stock(symbol="AAPL", news=None, decision=json.loads('{"buy": 1, "sell": null, "trail_percent": 6.0, "message": "The current news and price history for AAPL indicate positive sentiment and a potential increase in stock price. It is recommended to buy 19 shares of AAPL."}'))
 trading_bot.news.run()
