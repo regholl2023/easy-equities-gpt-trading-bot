@@ -172,4 +172,7 @@ class TradingBot():
 
 trading_bot = TradingBot()
 # trading_bot.process_stock(symbol="AAPL", news=None, decision=json.loads('{"buy": 1, "sell": null, "trail_percent": 6.0, "message": "The current news and price history for AAPL indicate positive sentiment and a potential increase in stock price. It is recommended to buy 19 shares of AAPL."}'))
+# trading_bot.process_stock(symbol="TSLA", news=None, decision={'buy': None, 'sell': True, 'trail_percent': 1.0, 'message': 'It is recommended to sell the NVDA stock.'})
 trading_bot.news.run()
+
+
