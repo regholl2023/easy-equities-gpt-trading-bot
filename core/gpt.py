@@ -70,7 +70,7 @@ class GPTBot:
         prompt += "note: do not spend all money on one stock!\n"
         # this line can easly be checked for on client side
         # prompt += "note: you may only spend a maximum amount of 10% of the capital amount\n"
-        prompt += "note: trail_percent default is generally 1.0 (which is 1%), you can choose whatever value is appropriate\n"
+        prompt += "note: trail_percent default is generally 0.01 (which is 1%), you can choose whatever value is appropriate\n"
         prompt += """based on the given information Please suggest the best trading decision in this JSON format:\n
 {
     "buy": quantity (int) or null,
