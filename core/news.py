@@ -14,11 +14,6 @@ class News():
 
     def on_message(self, ws, message):
 
-        # collect some messages for testing
-        file1 = open("text.txt", "a")
-        file1.write(f"{message}\n")
-        file1.close()
-
         try:
             msgs = json.loads(message)
             for msg in msgs:
