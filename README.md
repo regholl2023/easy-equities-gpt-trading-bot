@@ -15,11 +15,10 @@ This project showcases the potential of artificial intelligence in financial dec
 With its ability to process vast amounts of information and generate intelligent insights, the Stock Trading Bot represents an innovative solution for traders seeking an edge in the dynamic and fast-paced world of stock trading.
 
 ## Create a file env.py file with the following:
-EASY_EQUITIES = {'user_name': 'user_name', 'password': 'password'}
-
 OPEN_AI_API_KEY = 'your_openai_api_key'
-
-MARKETAUX_API_KEY = 'your_marketaux_api_key'
+ALPACA = 'https://paper-api.alpaca.markets' # for paper trading
+ALPACA_API_KEY = 'ALPACA_API_KEY'
+ALPACA_SECRET_KEY = 'ALPACA_SECRET_KEY'
 
 then create a Python virtual environment called env and install requirements.txt with
 pip install -r requirements.txt
