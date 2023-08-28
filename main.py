@@ -1,16 +1,8 @@
 import json
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from webdriver_manager.chrome import ChromeDriverManager
 import yfinance as yf
-from datetime import datetime
-from core.easy_equities import EasyEquities
 from core.alpaca import AlpacaTrading
 from core.gpt import GPTBot
 from core.news import News
-import sched
-from time import time, sleep
-import math
 
 # import env vaiables from env.py
 # before using this program you need to
